@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameService.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">projekt1</a> &gt; <a href="index.source.html" class="el_package">service</a> &gt; <span class="el_source">GameService.kt</span></div><h1>GameService.kt</h1><pre class="source lang-java linenums">package service
+
+import java.util.*
+import entity.*
+
+/**
+ * all the game services are here implemented
+ */
+
+<span class="fc" id="L10">class GameService (private val rootService:RootService):AbstractRefreshingService(){</span>
+<span class="pc" id="L11">    var passCounter: Int=0</span>
+<span class="pc" id="L12">    var disableKnock=false</span>
+
+    /**
+     * function startGAme initialise the game ,the playerList,the unusedCards and the openCards
+     */
+    fun startGame(playerName:MutableList&lt;String&gt;) {
+
+<span class="fc bfc" id="L19" title="All 6 branches covered.">        if(playerName.size in 2..4)</span>
+        {
+<span class="fc" id="L21">            rootService.currentGame = Game()</span>
+<span class="fc" id="L22">            resetPassCounter()</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">            for (name in playerName) {</span>
+<span class="fc" id="L24">                val player=initializePlayers(name)</span>
+<span class="pc bpc" id="L25" title="2 of 4 branches missed.">                rootService.currentGame?.players?.add(player)</span>
+            }
+<span class="pc bpc" id="L27" title="2 of 4 branches missed.">            rootService.currentGame?.unusedCards ?.addAll(createStack())</span>
+<span class="fc" id="L28">            rootService.currentGame!!.openCards.openCard.addAll(distributeNewCards())</span>
+<span class="fc" id="L29">            distributeCards()</span>
+
+            //onAllRefreshable { refreshAfterNewGameStart() }
+        }
+<span class="fc" id="L33">    }</span>
+
+    /**
+     * initialise the player with a name
+     */
+    private fun initializePlayers(name:String):Player{
+<span class="fc" id="L39">        return Player(name)</span>
+    }
+
+
+
+    /**
+     * switch from the current player and returns the next player
+     */
+    fun nextPlayer(player: Player): Player {
+<span class="fc" id="L48">        val game=rootService.currentGame</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        checkNotNull(game)</span>
+<span class="fc" id="L50">        game.players.removeFirst()</span>
+<span class="fc" id="L51">        game.players.add(player)</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if(game.players.first().hasKnocked){</span>
+<span class="nc" id="L53">            endGame()</span>
+        }
+        //else onAllRefreshable { refreshAfterTurnStart() }
+<span class="fc" id="L56">        return game.players.first()</span>
+    }
+
+    /**
+     * ends the currentGame and resets it by null
+     */
+    fun endGame() {
+
+<span class="pc" id="L64">        onAllRefreshable { refreshAfterGameEnd() }</span>
+<span class="fc" id="L65">        rootService.currentGame=null</span>
+<span class="fc" id="L66">    }</span>
+
+    /**
+     * at the start of Game all players should have 3 cards
+     */
+    private fun distributeCards() {
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if(rootService.currentGame!!.unusedCards .size&lt;3) {</span>
+<span class="nc" id="L73">            endGame()</span>
+        }
+<span class="fc" id="L75">        rootService.currentGame!!.players.forEach {</span>
+<span class="fc" id="L76">            it.handCard.addAll(distributeNewCards())</span>
+<span class="fc" id="L77">        }</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * returns a new list of 3 cards
+     */
+    fun distributeNewCards():List&lt;Card&gt;{
+<span class="fc" id="L84">        val game=rootService.currentGame</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        checkNotNull(game)</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        return List(3){game.unusedCards .removeFirst()}</span>
+    }
+
+    /**
+     * calculates the score of the current player
+     */
+    fun calculateScore(player: Player):Double{
+<span class="fc" id="L93">        val map :MutableMap&lt;CardSuit,Double&gt; = mutableMapOf(</span>
+<span class="fc" id="L94">            CardSuit.DIAMONDS to 0.0 ,</span>
+<span class="fc" id="L95">            CardSuit.CLUBS to 0.0 ,</span>
+<span class="fc" id="L96">            CardSuit.SPADES to 0.0 ,</span>
+<span class="fc" id="L97">            CardSuit.HEARTS to 0.0)</span>
+        val score: Double
+
+<span class="pc bpc" id="L100" title="3 of 4 branches missed.">        if (player.handCard[0].value==(player.handCard[1].value) &amp;&amp; player.handCard[0].value==(player.handCard[2].value))</span>
+<span class="nc" id="L101">            score=30.5</span>
+
+        else {
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            for(card in player.handCard)</span>
+            {
+<span class="fc" id="L106">                map[card.suit] = map[card.suit]!!.plus(card.value.getPoints())</span>
+            }
+<span class="fc" id="L108">            score=map.values.maxOrNull()!!</span>
+        }
+<span class="fc" id="L110">        return score</span>
+    }
+    /**
+     * find the winnerslist
+     */
+    fun findWinners():List&lt;Player&gt; {
+
+<span class="nc" id="L117">        val game = rootService.currentGame</span>
+<span class="nc" id="L118">        val gs = rootService.gameService</span>
+
+<span class="nc" id="L120">        val map : MutableMap&lt;Double, Player&gt; = HashMap ()</span>
+<span class="nc bnc" id="L121" title="All 4 branches missed.">        for (i in 0 until game!!.players.size) {</span>
+
+<span class="nc" id="L123">            map[gs.calculateScore(game.players[i])] = game.players[i]</span>
+        }
+<span class="nc" id="L125">        val sortedMap: MutableMap&lt;Double,Player&gt; = LinkedHashMap()</span>
+<span class="nc" id="L126">        map.entries.sortedBy { it.key }.forEach { sortedMap[it.key] = it.value }</span>
+<span class="nc" id="L127">        val winnerList = ArrayList(sortedMap.values)</span>
+        //var winningPlayer = winnerList[0]
+<span class="nc" id="L129">        return winnerList</span>
+    }
+    /**
+     * increments the passCounter
+     */
+    fun setPassCounter(){
+<span class="fc" id="L135">        passCounter++</span>
+<span class="fc" id="L136">    }</span>
+
+    /**
+     * resets the passCounter to 0
+     */
+    fun resetPassCounter(){
+<span class="fc" id="L142">        passCounter=0</span>
+
+<span class="fc" id="L144">    }</span>
+    /**
+     * create the cardStack with the 32 cards
+     */
+    private fun createStack(): MutableList&lt;Card&gt; {
+<span class="fc" id="L149">        val stack = mutableListOf&lt;Card&gt;()</span>
+<span class="fc" id="L150">        stack.add(Card(CardSuit.DIAMONDS, CardValue.SEVEN))</span>
+<span class="fc" id="L151">        stack.add(Card(CardSuit.DIAMONDS, CardValue.EIGHT))</span>
+<span class="fc" id="L152">        stack.add(Card(CardSuit.DIAMONDS, CardValue.NINE))</span>
+<span class="fc" id="L153">        stack.add(Card(CardSuit.DIAMONDS, CardValue.TEN))</span>
+<span class="fc" id="L154">        stack.add(Card(CardSuit.DIAMONDS, CardValue.JACK))</span>
+<span class="fc" id="L155">        stack.add(Card(CardSuit.DIAMONDS, CardValue.QUEEN))</span>
+<span class="fc" id="L156">        stack.add(Card(CardSuit.DIAMONDS, CardValue.KING))</span>
+<span class="fc" id="L157">        stack.add(Card(CardSuit.DIAMONDS, CardValue.ACE))</span>
+<span class="fc" id="L158">        stack.add(Card(CardSuit.CLUBS, CardValue.SEVEN))</span>
+<span class="fc" id="L159">        stack.add(Card(CardSuit.CLUBS, CardValue.EIGHT))</span>
+<span class="fc" id="L160">        stack.add(Card(CardSuit.CLUBS, CardValue.NINE))</span>
+<span class="fc" id="L161">        stack.add(Card(CardSuit.CLUBS, CardValue.TEN))</span>
+<span class="fc" id="L162">        stack.add(Card(CardSuit.CLUBS, CardValue.JACK))</span>
+<span class="fc" id="L163">        stack.add(Card(CardSuit.CLUBS, CardValue.QUEEN))</span>
+<span class="fc" id="L164">        stack.add(Card(CardSuit.CLUBS, CardValue.KING))</span>
+<span class="fc" id="L165">        stack.add(Card(CardSuit.CLUBS, CardValue.ACE))</span>
+<span class="fc" id="L166">        stack.add(Card(CardSuit.HEARTS, CardValue.SEVEN))</span>
+<span class="fc" id="L167">        stack.add(Card(CardSuit.HEARTS, CardValue.EIGHT))</span>
+<span class="fc" id="L168">        stack.add(Card(CardSuit.HEARTS, CardValue.NINE))</span>
+<span class="fc" id="L169">        stack.add(Card(CardSuit.HEARTS, CardValue.TEN))</span>
+<span class="fc" id="L170">        stack.add(Card(CardSuit.HEARTS, CardValue.JACK))</span>
+<span class="fc" id="L171">        stack.add(Card(CardSuit.HEARTS, CardValue.QUEEN))</span>
+<span class="fc" id="L172">        stack.add(Card(CardSuit.HEARTS, CardValue.KING))</span>
+<span class="fc" id="L173">        stack.add(Card(CardSuit.HEARTS, CardValue.ACE))</span>
+<span class="fc" id="L174">        stack.add(Card(CardSuit.SPADES, CardValue.SEVEN))</span>
+<span class="fc" id="L175">        stack.add(Card(CardSuit.SPADES, CardValue.EIGHT))</span>
+<span class="fc" id="L176">        stack.add(Card(CardSuit.SPADES, CardValue.NINE))</span>
+<span class="fc" id="L177">        stack.add(Card(CardSuit.SPADES, CardValue.TEN))</span>
+<span class="fc" id="L178">        stack.add(Card(CardSuit.SPADES, CardValue.JACK))</span>
+<span class="fc" id="L179">        stack.add(Card(CardSuit.SPADES, CardValue.QUEEN))</span>
+<span class="fc" id="L180">        stack.add(Card(CardSuit.SPADES, CardValue.KING))</span>
+<span class="fc" id="L181">        stack.add(Card(CardSuit.SPADES, CardValue.ACE))</span>
+<span class="fc" id="L182">        stack.shuffle()</span>
+<span class="fc" id="L183">        return stack</span>
+    }
+
+    /**
+     * if a player knocks then the knockButton should be disabled
+     */
+    fun disableKnockButton(){
+<span class="fc" id="L190">        disableKnock=true</span>
+<span class="fc" id="L191">    }</span>
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PlayerActionService.kt</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">projekt1</a> &gt; <a href="index.source.html" class="el_package">service</a> &gt; <span class="el_source">PlayerActionService.kt</span></div><h1>PlayerActionService.kt</h1><pre class="source lang-java linenums">package service
+
+import entity.*
+
+
+/**
+ * all the player Services are here implemented
+ */
+<span class="fc" id="L9">class PlayerActionService(private val rootService: RootService):AbstractRefreshingService(){</span>
+    /**
+     * exchange a card from the players hand with a one of the 3 open cards in the table
+     */
+    fun exchangeOneCard (player: Player, playercard: Card, tablecard: Card){
+<span class="nc" id="L14">        val game=rootService.currentGame</span>
+<span class="nc bnc" id="L15" title="All 2 branches missed.">        checkNotNull(game)</span>
+<span class="nc" id="L16">        rootService.gameService.resetPassCounter()</span>
+<span class="nc" id="L17">        val handIndex= player.handCard.indexOf(playercard)</span>
+<span class="nc" id="L18">        val tableIndex= game.openCards.openCard.indexOf(tablecard)</span>
+<span class="nc" id="L19">        game.openCards.openCard[tableIndex] = playercard</span>
+<span class="nc" id="L20">        player.handCard[handIndex] = tablecard</span>
+
+        //onAllRefreshable { refreshAfterSwapSingleCard() }
+<span class="nc" id="L23">        rootService.gameService.nextPlayer(player)</span>
+
+<span class="nc" id="L25">    }</span>
+
+    /**
+     * exchange the entire cards in the playershand with the 3 open cards in the table
+     */
+    fun exchangeAllCards (player: Player){
+<span class="nc" id="L31">        val game=rootService.currentGame</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">        checkNotNull(game)</span>
+<span class="nc" id="L33">        val hand=player.handCard</span>
+<span class="nc" id="L34">        val table=game.openCards.openCard</span>
+<span class="nc" id="L35">        player.handCard = table</span>
+<span class="nc" id="L36">        game.openCards.openCard = hand</span>
+
+        //onAllRefreshable { refreshAfterSwapAllCard() }
+<span class="nc" id="L39">        rootService.gameService.nextPlayer(player)</span>
+
+
+
+<span class="nc" id="L43">    }</span>
+
+    /**
+     * this function represents the knock
+     */
+    fun knock (player: Player){
+<span class="nc" id="L49">        val game=rootService.currentGame</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        checkNotNull(game)</span>
+<span class="nc" id="L51">        player.hasKnocked()</span>
+<span class="nc" id="L52">        rootService.gameService.resetPassCounter()</span>
+<span class="nc" id="L53">        rootService.gameService.nextPlayer(player)</span>
+<span class="nc" id="L54">        rootService.gameService.disableKnockButton()</span>
+       // onAllRefreshable { refreshAfterKnock() }
+<span class="nc" id="L56">    }</span>
+    /**
+     * this function represents the pass
+     */
+    fun pass (player: Player){
+<span class="fc" id="L61">        val game=rootService.currentGame</span>
+<span class="fc" id="L62">        rootService.gameService.setPassCounter()</span>
+
+<span class="fc" id="L64">        val playerNbr=game!!.players.size</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        if(rootService.gameService.passCounter==playerNbr){</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">            if(game.unusedCards .size&gt;=3){</span>
+<span class="nc" id="L67">                game.openCards= OpenCards(rootService.gameService.distributeNewCards() as MutableList&lt;Card&gt;)</span>
+                //onAllRefreshable { refreshMidCards() }
+<span class="nc" id="L69">                rootService.gameService.resetPassCounter()</span>
+<span class="nc" id="L70">                rootService.gameService.nextPlayer(player)</span>
+            }
+
+<span class="nc" id="L73">            else rootService.gameService.endGame()</span>
+        }
+        else{
+            //onAllRefreshable { refreshAfterPass() }
+<span class="fc" id="L77">            rootService.gameService.nextPlayer(player)</span>
+        }
+
+<span class="fc" id="L80">    }</span>
+    fun updateScore (player: Player){
+<span class="nc" id="L82">        val game = rootService.currentGame</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        checkNotNull(game)</span>
+<span class="nc" id="L84">       player.score = rootService.gameService.calculateScore(player)</span>
+<span class="nc" id="L85">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
